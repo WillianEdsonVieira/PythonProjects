@@ -1,52 +1,50 @@
+
 import smtplib
-import os
-from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
+import os
 import schedule
 import time
+from config import SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, FROM_EMAIL, TO_EMAIL
 
 def send_email():
-    smtp_server = 'smtp.gmail.com'
-    smtp_port = 587
-    smtp_user = 'seu_email@gmail.com'
-    smtp_password = 'sua_senha'
-
-    from_email = 'seu_email@gmail.com'
-    to_email = 'destinatario@example.com'
     subject = 'Relatório Diário'
-    body = 'Olá, segue em anexo o relatório diário.'
+    body = 'Anexo está o relatório diário em PDF.'
 
     msg = MIMEMultipart()
-    msg['From'] = from_email
-    msg['To'] = to_email
+    msg['From'] = FROM_EMAIL
+    msg['To'] = TO_EMAIL
     msg['Subject'] = subject
 
     msg.attach(MIMEText(body, 'plain'))
 
-    filename = 'relatorio_diario.pdf'
-    attachment = open(filename, 'rb')
+    file_path = 'caminho/para/relatorio_diario.pdf' 
 
-    part = MIMEBase('application', 'octet-stream')
-    part.set_payload(attachment.read())
-    encoders.encode_base64(part)
-    part.add_header('Content-Disposition', f'attachment; filename={filename}')
 
-    msg.attach(part)
-    attachment.close()
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as attachment:
+            part = MIMEBase('application', 'octet-stream')
+            part.set_payload(attachment.read())
+        
+        encoders.encode_base64(part)
+        
+        part.add_header('Content-Disposition', f'attachment; filename={os.path.basename(file_path)}')
+        msg.attach(part)
+    else:
+        print(f'Arquivo PDF não encontrado em {file_path}')
 
     try:
-        server = smtplib.SMTP(smtp_server, smtp_port)
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
         server.starttls()
-        server.login(smtp_user, smtp_password)
+        server.login(SMTP_USER, SMTP_PASSWORD)
         text = msg.as_string()
-        server.sendmail(from_email, to_email, text)
+        server.sendmail(FROM_EMAIL, TO_EMAIL, text)
+        server.quit()
         print('E-mail enviado com sucesso!')
     except Exception as e:
-        print(f'Erro ao enviar e-mail: {e}')
-    finally:
-        server.quit()
+        print(f'Erro ao enviar e-mail: {str(e)}')
 
 schedule.every().day.at("08:00").do(send_email)
 
