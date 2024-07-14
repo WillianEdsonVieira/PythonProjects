@@ -1,0 +1,55 @@
+import smtplib
+import os
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+import schedule
+import time
+
+def send_email():
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 587
+    smtp_user = 'seu_email@gmail.com'
+    smtp_password = 'sua_senha'
+
+    from_email = 'seu_email@gmail.com'
+    to_email = 'destinatario@example.com'
+    subject = 'Relatório Diário'
+    body = 'Olá, segue em anexo o relatório diário.'
+
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = to_email
+    msg['Subject'] = subject
+
+    msg.attach(MIMEText(body, 'plain'))
+
+    filename = 'relatorio_diario.pdf'
+    attachment = open(filename, 'rb')
+
+    part = MIMEBase('application', 'octet-stream')
+    part.set_payload(attachment.read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', f'attachment; filename={filename}')
+
+    msg.attach(part)
+    attachment.close()
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+        text = msg.as_string()
+        server.sendmail(from_email, to_email, text)
+        print('E-mail enviado com sucesso!')
+    except Exception as e:
+        print(f'Erro ao enviar e-mail: {e}')
+    finally:
+        server.quit()
+
+schedule.every().day.at("08:00").do(send_email)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
