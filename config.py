@@ -1,4 +1,4 @@
-
+#configurações servidor de email
 SMTP_SERVER = 'smtp.seu_servidor.com'
 SMTP_PORT = 587  
 SMTP_USER = 'seu_email@exemplo.com'
